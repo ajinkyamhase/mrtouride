@@ -10,8 +10,8 @@ import 'package:mrtouride/navpages/my_page.dart';
 import 'package:mrtouride/navpages/search_page.dart';
 
 class MainPage extends StatefulWidget {
-@override
-_MainPageState createState() => _MainPageState();
+  @override
+  _MainPageState createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
@@ -54,9 +54,9 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(icon:Icon(Icons.bar_chart_sharp), label:"Bar"),
           BottomNavigationBarItem(icon:Icon(Icons.search), label:"Search"),
           BottomNavigationBarItem(icon:Icon(Icons.person), label:"My"),
-           // BottomNavigationBarItem(title:Text("Bar"),icon:Icon(Icons.apps)),
-           // BottomNavigationBarItem(title:Text("Search"),icon:Icon(Icons.apps)),
-           // BottomNavigationBarItem(title:Text("My"),icon:Icon(Icons.apps)),
+          // BottomNavigationBarItem(title:Text("Bar"),icon:Icon(Icons.apps)),
+          // BottomNavigationBarItem(title:Text("Search"),icon:Icon(Icons.apps)),
+          // BottomNavigationBarItem(title:Text("My"),icon:Icon(Icons.apps)),
         ],
 
       ),
