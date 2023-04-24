@@ -1,165 +1,225 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'constant.dart';
 import 'package:mrtouride/navpages/main_page.dart';
 import 'package:mrtouride/pilgrimage_page.dart';
 import 'package:mrtouride/signup.dart';
 
-class LoginPage extends StatefulWidget {
-  @override
-  _LoginPageState createState() => _LoginPageState();
-}
+import 'main.dart';
 
-class _LoginPageState extends State<LoginPage> {
+class LoginPage extends StatelessWidget {
+  LoginPage({super.key});
+
   @override
   Widget build(BuildContext context) {
+    TextEditingController email = TextEditingController();
+    TextEditingController password = TextEditingController();
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
-        brightness: Brightness.light,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          onPressed: (){
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios,
-            size: 20,
-            color:Colors.black ,),
-        ),
-      ),
-      body:
-      Container(
-        height: MediaQuery.of(context).size.height,
-        width: double.infinity,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children:<Widget> [
-            Expanded(child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Container(
-                  height: MediaQuery.of(context).size.height / 3.2,
-                  //padding: EdgeInsets.only(top:50),
-                  decoration: const BoxDecoration(
-                    image:DecorationImage(
-                        image: AssetImage("assets/image/logbg.png"),
-                        fit: BoxFit.fitHeight
-                    ) ,
-                  ),
-                ),
-                Column(
-                  children:<Widget> [
-                    const Text("Login Now",
-                      style: TextStyle(fontSize: 30,fontWeight: FontWeight.bold),),
-                    const SizedBox(height: 20,),
-                    Text("Please enter the details below to continue",
-                      style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey[700]
-                      ),),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    children: <Widget>[
-                      inputFile(label: "Email"),
-                      inputFile(label: "Password",obscureText: true),
-                    ],
-                  ),
-                ),
-                Padding(padding:
-                EdgeInsets.symmetric(horizontal: 40),
-
-                  child: Container(
-                    padding: EdgeInsets.only(top:30, left:3),
-
-                    child: MaterialButton(
-                      minWidth: double.infinity,
-                      height: 60,
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>MainPage()));
-                      },
-                      color: Color(0xff052933),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Text(
-                        "Login",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Row(
+      body: Center(
+        child: Container(
+          margin: const EdgeInsets.all(25),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Form(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-
-                    Text("Don't have an account?"),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>SingUpPage()));
-                      },
-                      child: Text("Sign up",
-
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 30),
+                      child: const Center(
+                        child: Image(
+                          image: AssetImage("assets/image/logbg.png"),
+                          width: 200,
                         ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Text(
+                        'Login to your Account',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: customFormFeild(
+                        labelText: 'Email',
+                        keyboardType: TextInputType.emailAddress,
+                        obscureText: false,
+                        controller: email,
+                        textInputAction: TextInputAction.next,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: customFormFeild(
+                        controller: password,
+                        labelText: 'Password',
+                        keyboardType: TextInputType.text,
+                        obscureText: true,
+                        textInputAction: TextInputAction.next,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: StatefulBuilder(
+                        builder: (BuildContext context, setState) {
+                          return loading
+                              ? MaterialButton(
+                              onPressed: () async {
+                                if (email.text.isNotEmpty) {
+                                  if (password.text.isNotEmpty) {
+                                    setState(() {
+                                      loading = !loading;
+                                    });
+                                  } else {
+                                    newSnackBar(context,
+                                        title:
+                                        'Email and Password Required!');
+                                  }
+                                } else {
+                                  newSnackBar(context,
+                                      title: 'Email Required!');
+                                }
+
+                                try {
+                                  await FirebaseAuth.instance
+                                      .signInWithEmailAndPassword(
+                                      email: email.text,
+                                      password: password.text)
+                                      .then((value) {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                        const HomePage(),
+                                      ),
+                                    );
+
+                                    setState(() {
+                                      loading = !loading;
+                                    });
+                                  });
+                                } on FirebaseAuthException catch (e) {
+                                  if (e.code == 'user-not-found') {
+                                    newSnackBar(context,
+                                        title:
+                                        'No user found for that email.');
+                                    setState(() {
+                                      loading = !loading;
+                                    });
+                                  } else if (e.code == 'wrong-password') {
+                                    newSnackBar(context,
+                                        title:
+                                        'Wrong password provided for that user.');
+                                    setState(() {
+                                      loading = !loading;
+                                    });
+                                  }
+                                }
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              color: blue,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Padding(
+                                    padding:
+                                    EdgeInsets.fromLTRB(0, 15, 0, 15),
+                                    child: Text(
+                                      'Sign In',
+                                      style: TextStyle(color: white),
+                                    ),
+                                  ),
+                                ],
+                              ))
+                              : Center(
+                            child: MaterialButton(
+                              onPressed: () {},
+                              shape: const CircleBorder(),
+                              color: blue,
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(
+                                  color: white,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
                 ),
-
-              ],
-            ),),
-          ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Don't have an account? ",
+                    style: TextStyle(
+                      color: black,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SingUpPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Sign Up',
+                      style: TextStyle(
+                        color: blue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-Widget inputFile({label, obscureText = false})
-{
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children:<Widget>[
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          color: Colors.black87,
-        ),
-      ),
-      SizedBox(
-        height: 5,
-      ),
-      TextField(
-        autofocus: true,
+  customFormFeild({
+    controller,
+    labelText,
+    keyboardType,
+    textInputAction,
+    obscureText,
+  }) {
+    return Material(
+      elevation: 2,
+      shadowColor: black,
+      color: white,
+      borderRadius: BorderRadius.circular(5.0),
+      child: TextFormField(
+        autofocus: false,
+        textInputAction: textInputAction,
+        keyboardType: keyboardType,
+        controller: controller,
+        cursorColor: black,
         obscureText: obscureText,
         decoration: InputDecoration(
-          contentPadding: EdgeInsets.symmetric(vertical: 0,
-              horizontal: 10),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.grey,
-            ),
-          ),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color:Colors.grey),
-          ),
+          labelText: labelText,
+          labelStyle: const TextStyle(color: black),
+          contentPadding: const EdgeInsets.all(8),
+          border: InputBorder.none,
         ),
       ),
-      SizedBox(height: 10,),
-    ],
-  );
+    );
+  }
 }

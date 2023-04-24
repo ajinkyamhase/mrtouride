@@ -1,147 +1,231 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mrtouride/login.dart';
+import 'constant.dart';
+import 'main.dart';
 
-class SingUpPage extends StatefulWidget {
-  @override
-  _SingUpPageState createState() => _SingUpPageState();
-}
 
-class _SingUpPageState extends State<SingUpPage> {
+import 'constant.dart';
+import 'navpages/main_page.dart';
+
+class SingUpPage extends StatelessWidget {
+  const SingUpPage({super.key});
   @override
   Widget build(BuildContext context) {
+    TextEditingController email = TextEditingController();
+    TextEditingController name = TextEditingController();
+    TextEditingController password = TextEditingController();
+
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        elevation: 0,
-        brightness: Brightness.light,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          onPressed: (){
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios,
-            size: 20,
-            color:Colors.black ,),
+        iconTheme: const IconThemeData(
+          color: blue,
         ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: Center(
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 40),
-          height: MediaQuery.of(context).size.height-50,
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-            Column(
-              children: <Widget>[
-                Text("Sign up", style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),),
-                SizedBox(height: 20,),
-                Text("Create an account, It's free",
-                  style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey[700]),),
-
-              ],
-            ),
-              Column(
-               children: <Widget>[
-                 inputFile(label: "Username"),
-                 inputFile(label: "Email"),
-                 inputFile(label: "Password",obscureText: true),
-                 inputFile(label: "Confirm Password", obscureText: true),
-               ],
-             ),
-              Container(
-                padding: EdgeInsets.only(top:3, left: 3),
-                decoration:
-                  BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    border: Border(
-                      bottom: BorderSide(color: Colors.black),
-                      top: BorderSide(color: Colors.black),
-                      left: BorderSide(color: Colors.black),
-                      right: BorderSide(color: Colors.black),
-
-
-                    )
-                  ),
-                child: MaterialButton(
-                  minWidth: double.infinity,
-                  height: 60,
-                  onPressed: () {},
-                  color: Color(0xff052933),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Text(
-                    "Sign up",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 18,
-                      color: Colors.white,
+          margin: const EdgeInsets.all(25),
+          child: Form(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 30),
+                  child: const Center(
+                    child: Image(
+                      image: AssetImage("assets/image/bg.png"),
+                      width: 200,
                     ),
                   ),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
+                const Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: Text(
+                    'Create your Account',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: customFormFeild(
+                    labelText: 'Name',
+                    keyboardType: TextInputType.text,
+                    obscureText: false,
+                    controller: name,
+                    textInputAction: TextInputAction.next,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: customFormFeild(
+                    labelText: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                    obscureText: false,
+                    controller: email,
+                    textInputAction: TextInputAction.next,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: customFormFeild(
+                    controller: password,
+                    labelText: 'Password',
+                    keyboardType: TextInputType.text,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: StatefulBuilder(
+                    builder: (BuildContext context, setState) {
+                      return loading
+                          ? MaterialButton(
+                          onPressed: () async {
+                            if (name.text.isNotEmpty) {
+                              if (email.text.isNotEmpty) {
+                                if (password.text.isNotEmpty) {
+                                  setState(() {
+                                    loading = !loading;
+                                  });
+                                } else {
+                                  newSnackBar(context,
+                                      title: 'Password Required!');
+                                }
+                              } else {
+                                newSnackBar(context,
+                                    title: 'Email Required!');
+                              }
+                            } else {
+                              newSnackBar(context, title: 'Name Required!');
+                            }
 
-                  Text("Already have an account?"),
-                  Text(" Login", style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),),
-                ],
-              ),
-            ],
+                            try {
+                              await FirebaseAuth.instance
+                                  .createUserWithEmailAndPassword(
+                                  email: email.text,
+                                  password: password.text)
+                                  .then((value) async {
+                                await FirebaseFirestore.instance
+                                    .collection("/demo/account/users")
+                                    .doc(value.user!.uid)
+                                    .set({
+                                  'uid': value.user!.uid,
+                                  'name': name.text,
+                                  'email': email.text,
+                                }).then((value) {
+                                  email.clear();
+                                  name.clear();
+                                  password.clear();
+                                  Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              MainPage(),
+                                        ),
+                                      );
+                                      setState(() {
+                                        loading = !loading;
+                                      });
+                                });
+                              });
+                            } on FirebaseAuthException catch (e) {
+                              if (e.code == 'weak-password') {
+                                newSnackBar(context,
+                                    title:
+                                    'The password provided is too weak.');
+                                setState(() {
+                                  loading = !loading;
+                                });
+                              } else if (e.code == 'email-already-in-use') {
+                                newSnackBar(context,
+                                    title:
+                                    'The account already exists for that email.');
+                                setState(() {
+                                  loading = !loading;
+                                });
+                              }
+                            } catch (e) {
+                              newSnackBar(context, title: e);
+                              setState(() {
+                                loading = !loading;
+                              });
+                            }
+                          },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          color: blue,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(0, 15, 0, 15),
+                                child: Text(
+                                  'Sign Up',
+                                  style: TextStyle(color: white),
+                                ),
+                              ),
+                            ],
+                          ))
+                          : Center(
+                        child: MaterialButton(
+                          onPressed: () {},
+                          shape: const CircleBorder(),
+                          color: blue,
+                          child: const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(
+                              color: white,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-
-
-Widget inputFile({label, obscureText = false})
-{
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children:<Widget>[
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          color: Colors.black87,
-        ),
-      ),
-      SizedBox(
-        height: 5,
-      ),
-      TextField(
-        autofocus: true,
+  customFormFeild({
+    controller,
+    labelText,
+    keyboardType,
+    textInputAction,
+    obscureText,
+  }) {
+    return Material(
+      elevation: 2.0,
+      shadowColor: black,
+      borderRadius: BorderRadius.circular(5.0),
+      color: white,
+      child: TextFormField(
+        autofocus: false,
+        textInputAction: textInputAction,
+        keyboardType: keyboardType,
+        controller: controller,
+        cursorColor: black,
         obscureText: obscureText,
         decoration: InputDecoration(
-          contentPadding: EdgeInsets.symmetric(vertical: 0,
-              horizontal: 10),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.grey,
-            ),
-          ),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color:Colors.grey),
-          ),
+          labelText: labelText,
+          labelStyle: const TextStyle(color: black),
+          contentPadding: const EdgeInsets.all(8),
+          border: InputBorder.none,
         ),
       ),
-      SizedBox(height: 10,),
-    ],
-  );
+    );
+  }
 }
