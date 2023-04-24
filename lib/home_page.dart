@@ -41,7 +41,7 @@ class _HomePageState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'Hello Travlog',
+                      'Hello Mr.Touride',
                       style: TextStyle(color: Colors.black87, fontSize: 25),
                     ),
                     SizedBox(
